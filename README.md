@@ -1,3 +1,3 @@
-# chattr
+# Chattr - A Next.js Full-Stack Chatting App!
 
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/adam-php/chattr)
+Chattr is a Supabase + Next.js full-stack app
