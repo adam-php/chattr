@@ -6,16 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { MessageSquare } from "lucide-react";
+import { Mail } from "lucide-react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/config";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const handleAuth = async (type: "login" | "signup") => {
     try {
@@ -24,10 +27,23 @@ export default function AuthPage() {
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({ email, password });
 
-      if (error) throw error;
-      router.push("/chat");
-    } catch (error) {
-      console.error("Error:", error);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const redirectTo = searchParams.get('redirectedFrom') || '/dashboard';
+      router.push(redirectTo);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -43,16 +59,16 @@ export default function AuthPage() {
         <Card className="w-[380px]">
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center gap-2 text-3xl">
-              <MessageSquare className="h-8 w-8" />
-              Chattr
+              <Mail className="h-8 w-8" />
+              Email Service
             </CardTitle>
             <CardDescription>
-              Connect and chat with people around the world
+              Send and manage your emails efficiently
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
@@ -64,9 +80,10 @@ export default function AuthPage() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="hello@example.com"
+                        placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                       />
                     </div>
                     <div className="space-y-2">
@@ -74,14 +91,16 @@ export default function AuthPage() {
                       <Input
                         id="password"
                         type="password"
+                        placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        required
                       />
                     </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Logging in..." : "Login"}
+                    </Button>
                   </div>
-                  <Button className="w-full mt-6" type="submit" disabled={loading}>
-                    {loading ? "Loading..." : "Login"}
-                  </Button>
                 </form>
               </TabsContent>
               <TabsContent value="signup">
@@ -92,9 +111,10 @@ export default function AuthPage() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="hello@example.com"
+                        placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                       />
                     </div>
                     <div className="space-y-2">
@@ -102,38 +122,20 @@ export default function AuthPage() {
                       <Input
                         id="password"
                         type="password"
+                        placeholder="Choose a password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        required
                       />
                     </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Signing up..." : "Sign Up"}
+                    </Button>
                   </div>
-                  <Button className="w-full mt-6" type="submit" disabled={loading}>
-                    {loading ? "Loading..." : "Sign Up"}
-                  </Button>
                 </form>
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <div className="relative w-full">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <Button variant="outline" onClick={() => supabase.auth.signInWithOAuth({ provider: 'github' })}>
-                GitHub
-              </Button>
-              <Button variant="outline" onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}>
-                Google
-              </Button>
-            </div>
-          </CardFooter>
         </Card>
       </motion.div>
     </div>
